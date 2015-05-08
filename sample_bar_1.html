@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <meta charset="utf-8" />
+  <title>d3.js Axys Chart</title>
+  <!-- Always force latest IE rendering engine (even in intranet) & Chrome Frame
+  Remove this if you use the .htaccess -->
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+
+ <script type="text/javascript" src="d3_1.js"></script>
+ </script>        
+ <style>
+            .axis path, .axis line {
+                fill: none;
+                stroke: #000;
+                shape-rendering: crispEdges;
+            }
+            .line {
+                fill: none;
+                stroke-width: 1.5px;
+            }
+        </style>
+</head>
+<body>
+        <script>
+            var perfdata = new Array();
+
+            var margin = {top: 120, right: 60, bottom: 60, left: 60},
+                width = 800 - margin.right - margin.left,
+                height = 500 - margin.top - margin.bottom;
+            
+            var x = d3.time.scale()
+                .range([0, width - 60]);
+            
+            var y = d3.scale.linear()
+                .range([height - 20, 0]);
+        
+            var duration = 1500,
+                delay = 500;
+            
+            var color = d3.scale.category10();
+            
+            var svg = d3.select("#third").append("svg")
+                .attr("width", width + margin.right + margin.left)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+            
+            
+              perfdata = new Array();   
+         </script>
+		 <script> var data, origdata = {
+   "cDataSet":[      
+   {
+         "place":"Bengaluru",
+         "Total Fatal Accidents":"4.37",
+         "All Accidents":"4.99",
+		 "Persons Killed":"4.28",
+		 "Persons Injured":"5.59"
+      },
+      {
+         "place":"Chennai",
+         "Total Fatal Accidents":"8.44",
+         "All Accidents":"8.75",
+		 "Persons Killed":"8.26",
+		 "Persons Injured":"10.66"
+      },
+      
+      {
+         "place":"Kolkatta",
+         "Total Fatal Accidents":"2.91",
+         "All Accidents":"3.56",
+		 "Persons Killed":"2.94",
+		 "Persons Injured":"3.97"
+      },
+      {
+         "place":"Mumbai",
+         "Total Fatal Accidents":"2.91",
+         "All Accidents":"22.27",
+		 "Persons Killed":"2.88",
+		 "Persons Injured":"5.61"
+      },
+	  {
+         "place":"Delhi",
+         "Total Fatal Accidents":"11.25",
+         "All Accidents":"6.28",
+		 "Persons Killed":"11.01",
+		 "Persons Injured":"8.19"
+      }
+    ]
+ };
+</script>
+        <script>
+                var inc = 0;
+            
+                data = origdata.cDataSet;
+                
+                var cumul = new Array();
+                
+                for (key in data[1]) {
+                    if ( key != "place" ) {
+                        cumul[key] = 1;
+                        firstplace = data[0].place;
+                        //firstdate.setFullYear(firstdate.getFullYear()-1);
+                        perfdata[inc]  = { place: firstplace, perf : 0, cumul : cumul[key], symbol : key };
+                        inc = inc + 1;
+                   }
+                }
+            
+                 data.forEach( function(d) {
+                    for (key in d) {
+                        if ( key != "place" ) {
+                            cumul[key] = cumul[key] * (1 + parseFloat(d[key]) / 100);
+                            perfdata[inc]  = { place: d.place , perf : parseFloat(d[key]), cumul : cumul[key], symbol : key };
+                            inc = inc + 1;
+                        }
+                    };
+                }); 
+                  
+                //if we want to filter only some set of what is there
+                //stocks = perfdata.filter(function(d) { return d.symbol in filter; });
+                
+                // Nest stock values by symbol.
+                symbols = d3.nest()
+                  .key(function(d) { return d.symbol; })
+                  .entries(perfdata);
+                
+                // Parse dates and numbers. We assume values are sorted by date.
+                // Also compute the maximum price per symbol, needed for the y-domain.
+                //symbols.forEach(function(s) {
+                //    s.values.forEach(function(d) { d.date = parse(d.date); d.price = +d.price; });
+                //});
+                
+                // Sort by maximum price, descending.
+                //symbols.sort(function(a, b) { return b.maxPrice - a.maxPrice; });
+                
+                // Compute the minimum and maximum date across symbols.
+                //x.domain([
+                  //  d3.min(symbols, function(d) { return d.values[0].place; }),
+                    //d3.max(symbols, function(d) { return d.values[d.values.length - 1].place; })
+                //]);
+                
+                var g = svg.selectAll("g")
+                    .data(symbols)
+                    .enter().append("g")
+                        .attr("class", "symbol");  
+                                
+            groupedBar();
+
+            function groupedBar() {
+                  x = d3.scale.ordinal()
+                      .domain(symbols[1].values.map(function(d) { return d.place; }))
+                      .rangeBands([0, width - 60], .1);
+                
+                  var x1 = d3.scale.ordinal()
+                      .domain(symbols.map(function(d) { return d.key; }))
+                      .rangeBands([0, x.rangeBand()]);
+    
+                var y0 = Math.max(Math.abs(d3.min(symbols.map(function(d) { return d3.min(d.values.map(function(d) { return d.perf; })); }))), d3.max(symbols.map(function(d) { return d3.max(d.values.map(function(d) { return d.perf; })); })));                
+                y
+                    .domain([0, y0])
+                    //.domain([d3.min(symbols.map(function(d) { return d3.min(d.values.map(function(d) { return d.perf; })); })), d3.max(symbols.map(function(d) { return d3.max(d.values.map(function(d) { return d.perf; })); }))])
+                    .range([height, 0])
+                    .nice();
+                
+                var yAxis = d3.svg.axis().scale(y).orient("left");                            
+
+				
+				//var formatAxis = d3.format("  0");
+				             svg.selectAll(".labels")
+								.data(symbols[0].values.map(function(d) { return d.place; }))
+								.enter().append("text")
+								.attr("class", "labels")
+								.attr("text-anchor", "middle")
+								.attr("x", function(d,i) { return x(i) + x.rangeBand() / 2 ; })
+								.attr("y", height / 2 + 15)
+								.text(function(d) {return (d) })
+								.style("fill-opacity", 1);
+
+                
+                  var g = svg.selectAll(".symbol");
+                
+                  var t = g.transition()
+                      .duration(duration);
+                      
+                    //got working with lots of help but this section particularly dedicated to http://stackoverflow.com/questions/10127402/bar-chart-with-negative-values
+                  g.each(function(p, j) {
+                    d3.select(this).selectAll("rect")
+                        .data(function(d) { return d.values; })
+                      .enter().append("rect")
+                        .attr("x", function(d) { return x(d.place) + x1(p.key); })
+                        .attr("y", function(d, i) { return y(Math.max(0, d.perf)); })                        
+                        //.attr("y", function(d) { return y(d.perf); })
+                        .attr("width", x1.rangeBand())
+                        .attr("height", function(d, i) { return Math.abs(y(d.perf) - y(0)); })                        
+                        //.attr("height", function(d) { return height - y(d.perf); })
+                        .style("fill", color(p.key))
+                        .style("fill-opacity", 1e-6)                    
+                        //very grateful to http://blog.nextgenetics.net/demo/entry0032/ for help here on mouseover highlighting
+                        //another nice example http://bl.ocks.org/2164562
+                        .on('mouseover', function(d, i) {
+                             d3.select(this).style('fill','gray');
+                             statusText
+                                .text(p.key + " " + d.perf)
+                                .attr('fill',color(p.key))
+                                .attr("x", x(d.place) + x1(p.key) + x.rangeBand() / 2 )
+                                .attr("y", y(d.perf));
+                                
+                          })
+                          .on('mouseout', function(d,i) {
+                             statusText
+                                .text('');
+                             d3.select(this).style('fill',color(p.key));
+                          })
+                          .transition()
+                                .duration(duration)
+                                .style("fill-opacity", 1);
+
+                    
+                  var statusText = svg.append('svg:text');
+                      
+                       
+                    svg.append("g")
+                        .attr("class", "y axis")
+                        .call(yAxis);
+
+                
+            });
+            };
+      </script>
+
+ </body>
+</html>
